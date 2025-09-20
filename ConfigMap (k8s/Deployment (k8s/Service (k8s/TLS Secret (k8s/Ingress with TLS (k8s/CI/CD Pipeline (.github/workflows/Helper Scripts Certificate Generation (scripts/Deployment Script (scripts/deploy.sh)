@@ -1,0 +1,44 @@
+#!/bin/bash
+# Deploy Wisecow application to Kubernetes
+
+set -e
+
+NAMESPACE=${NAMESPACE:-default}
+KUBECONFIG=${KUBECONFIG:-$HOME/.kube/config}
+
+echo "🚀 Deploying Wisecow application..."
+
+# Check kubectl connection
+kubectl cluster-info
+
+# Create namespace if it doesn't exist
+kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
+
+# Apply Kubernetes manifests
+kubectl apply -f k8s/configmap.yaml -n $NAMESPACE
+kubectl apply -f k8s/secret.yaml -n $NAMESPACE
+kubectl apply -f k8s/deployment.yaml -n $NAMESPACE
+kubectl apply -f k8s/service.yaml -n $NAMESPACE
+kubectl apply -f k8s/ingress.yaml -n $NAMESPACE
+
+# Wait for deployment to be ready
+echo "⏳ Waiting for deployment to be ready..."
+kubectl wait --for=condition=available --timeout=300s deployment/wisecow-deployment -n $NAMESPACE
+
+# Check deployment status
+echo "📊 Deployment Status:"
+kubectl get pods -l app=wisecow -n $NAMESPACE
+kubectl get service wisecow-service -n $NAMESPACE
+kubectl get ingress wisecow-ingress -n $NAMESPACE
+
+echo "✅ Wisecow application deployed successfully!"
+
+# Get service URL
+SERVICE_IP=$(kubectl get service wisecow-service -n $NAMESPACE -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+if [ -z "$SERVICE_IP" ]; then
+    echo "🌐 Access the application using port-forwarding:"
+    echo "   kubectl port-forward service/wisecow-service 8080:80 -n $NAMESPACE"
+    echo "   Then visit: http://localhost:8080"
+else
+    echo "🌐 Application available at: http://$SERVICE_IP"
+fi
