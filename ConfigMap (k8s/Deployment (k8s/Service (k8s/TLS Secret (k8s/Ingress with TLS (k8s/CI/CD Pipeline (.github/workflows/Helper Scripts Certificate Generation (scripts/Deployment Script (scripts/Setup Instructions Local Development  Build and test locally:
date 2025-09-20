@@ -1,0 +1,5 @@
+# Build Docker image
+docker build -t wisecow:latest .
+
+# Run locally
+docker run -p 4499:4499 wisecow:latest
