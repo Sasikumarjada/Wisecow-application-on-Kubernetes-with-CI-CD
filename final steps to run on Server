@@ -1,0 +1,11 @@
+# Create the project folder
+mkdir wisecow-k8s
+cd wisecow-k8s
+
+# Copy the Dockerfile I provided and save it as "Dockerfile"
+# Copy the wisecow.sh script and save it as "wisecow.sh"
+
+# Test it works
+chmod +x wisecow.sh
+docker build -t wisecow:latest .
+docker run -p 4499:4499 wisecow:latest
