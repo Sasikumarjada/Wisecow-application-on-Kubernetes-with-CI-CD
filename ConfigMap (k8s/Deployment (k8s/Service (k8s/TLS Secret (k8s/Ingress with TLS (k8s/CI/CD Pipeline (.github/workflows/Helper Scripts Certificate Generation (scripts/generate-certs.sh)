@@ -1,0 +1,30 @@
+#!/bin/bash
+# Generate self-signed TLS certificates for development
+
+set -e
+
+DOMAIN=${1:-wisecow.local}
+CERT_DIR="./certs"
+
+mkdir -p $CERT_DIR
+
+# Generate private key
+openssl genrsa -out $CERT_DIR/tls.key 2048
+
+# Generate certificate signing request
+openssl req -new -key $CERT_DIR/tls.key -out $CERT_DIR/tls.csr \
+    -subj "/C=US/ST=CA/L=San Francisco/O=Wisecow/CN=$DOMAIN"
+
+# Generate self-signed certificate
+openssl x509 -req -in $CERT_DIR/tls.csr -signkey $CERT_DIR/tls.key \
+    -out $CERT_DIR/tls.crt -days 365
+
+# Create Kubernetes secret
+kubectl create secret tls wisecow-tls \
+    --cert=$CERT_DIR/tls.crt \
+    --key=$CERT_DIR/tls.key \
+    --dry-run=client -o yaml > k8s/secret.yaml
+
+echo "✅ TLS certificates generated and Kubernetes secret created"
+echo "📁 Certificates stored in: $CERT_DIR"
+echo "📄 Kubernetes secret definition: k8s/secret.yaml"
