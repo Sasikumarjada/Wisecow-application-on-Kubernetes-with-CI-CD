@@ -1,0 +1,14 @@
+# Start Minikube with ingress
+minikube start
+minikube addons enable ingress
+
+# Generate TLS certificates
+chmod +x scripts/generate-certs.sh
+./scripts/generate-certs.sh
+
+# Deploy application
+chmod +x scripts/deploy.sh
+./scripts/deploy.sh
+
+# Access application
+minikube service wisecow-service --url
